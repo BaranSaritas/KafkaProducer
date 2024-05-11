@@ -9,9 +9,9 @@ import org.springframework.kafka.core.KafkaTemplate;
 
 
 @SpringBootApplication
-@RequiredArgsConstructor
 public class KafkaProducerApplication implements CommandLineRunner {
 
+	@Autowired
 	private KafkaTemplate<String, String> kafkaTemplate;
 
 	public static void main(String[] args) {
@@ -23,7 +23,11 @@ public class KafkaProducerApplication implements CommandLineRunner {
 
 	@Override
 	public void run(String... args) throws Exception {
-	kafkaTemplate.send("transactional","deneme1");
+		for (int i = 0; i < 61; i++) {
+			int key = i % 6;
+			kafkaTemplate.send("java_test",key,String.valueOf(key),"deneme "+i);
+			kafkaTemplate.flush();
+		}
 	}
 }
 
