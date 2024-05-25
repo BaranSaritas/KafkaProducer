@@ -79,7 +79,8 @@ public class KafkaProducerApplication implements CommandLineRunner {
 		config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
 		config.put(ConsumerConfig.GROUP_ID_CONFIG, "kafka_group_deneme");
 		config.put(ConsumerConfig.CLIENT_ID_CONFIG, "kafka_client_deneme");
-		config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+		config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest"); //earliest
+		config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true");
 
 		KafkaConsumer<String, String> consumer = new KafkaConsumer<>(config);
 		consumer.subscribe(Arrays.asList("serializer"));
@@ -88,9 +89,11 @@ public class KafkaProducerApplication implements CommandLineRunner {
 
 		for (ConsumerRecord<String, String> record : consumerRecords) {
 			System.out.println(record.value());
+			//commit atma olayi hizi azaltir ama bir islem bitmeden commit atmak mantikli degil ciddi islemlerde
+			//	consumer.commitSync();   // zooekeeper da okundu bilgisini veriyorsun
 		}
 
-
+		 consumer.commitSync();   // tek tek kontrole almadan 1 tane commit attin hata da cikabilir
 
 
 	}
