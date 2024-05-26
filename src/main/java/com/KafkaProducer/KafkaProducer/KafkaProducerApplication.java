@@ -14,11 +14,14 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -26,6 +29,7 @@ import java.util.Properties;
 
 
 @SpringBootApplication
+@EnableScheduling
 public class KafkaProducerApplication implements CommandLineRunner {
 
 	@Autowired
@@ -40,9 +44,46 @@ public class KafkaProducerApplication implements CommandLineRunner {
 
 	@Override
 	public void run(String... args) throws Exception {
-		//http://localhost:29092/
 
-		// Producer senaryolari
+		Logger logger = LoggerFactory.getLogger(KafkaProducerApplication.class.getName());
+
+		String topic ="first-topic";
+		String bootstrapServers = "localhost:29092";
+		String groupId = "my-fourth-application";
+
+		// Create consumer config
+		Properties properties = new Properties();
+		properties.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+		properties.setProperty(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+		properties.setProperty(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+		properties.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");//earliest/latest/none
+		properties.setProperty(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+
+		//create consumer
+		KafkaConsumer<String, String> consumer = new KafkaConsumer<>(properties);
+
+		//subscribe consumer to our topic(s)
+		consumer.subscribe(Arrays.asList(topic));
+
+		//poll for new data
+		//for demo purpose using true
+		while(true) {
+			ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(100));
+			records.forEach(record->{
+				logger.info("key: "+ record.key()+", value: "+ record.value());
+				logger.info("partition: "+record.partition()+", offset: "+record.offset());
+			});
+		}
+
+
+	}
+}
+
+
+
+//http://localhost:29092/
+
+// Producer senaryolari
 		/*
 
 		Properties config = new Properties();
@@ -71,9 +112,9 @@ public class KafkaProducerApplication implements CommandLineRunner {
 			kafkaTemplate.flush();
 		}*/
 
-		// Consumer senaryolari
-
-		Properties config = new Properties();
+// Consumer senaryolari
+/*
+Properties config = new Properties();
 		config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:29092");
 		config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
 		config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
@@ -82,21 +123,17 @@ public class KafkaProducerApplication implements CommandLineRunner {
 		config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest"); //earliest
 		config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true");
 
-		KafkaConsumer<String, String> consumer = new KafkaConsumer<>(config);
+KafkaConsumer<String, String> consumer = new KafkaConsumer<>(config);
 		consumer.subscribe(Arrays.asList("serializer"));
 
-		ConsumerRecords<String, String> consumerRecords = consumer.poll(Duration.ofMinutes(1));
+ConsumerRecords<String, String> consumerRecords = consumer.poll(Duration.ofMinutes(1));
 
 		for (ConsumerRecord<String, String> record : consumerRecords) {
-			System.out.println(record.value());
-			//commit atma olayi hizi azaltir ama bir islem bitmeden commit atmak mantikli degil ciddi islemlerde
-			//	consumer.commitSync();   // zooekeeper da okundu bilgisini veriyorsun
+		System.out.println(record.value());
+		//commit atma olayi hizi azaltir ama bir islem bitmeden commit atmak mantikli degil ciddi islemlerde
+		//	consumer.commitSync();   // zooekeeper da okundu bilgisini veriyorsun
 		}
 
-		 consumer.commitSync();   // tek tek kontrole almadan 1 tane commit attin hata da cikabilir
+		consumer.commitSync();   // tek tek kontrole almadan 1 tane commit attin hata da cikabilir
 
-
-	}
-}
-
-
+		*/
