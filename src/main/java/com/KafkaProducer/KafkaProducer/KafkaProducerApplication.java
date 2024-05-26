@@ -4,6 +4,7 @@ import com.KafkaProducer.KafkaProducer.dto.SModel;
 
 import io.confluent.kafka.serializers.KafkaJsonDeserializer;
 import io.confluent.kafka.serializers.KafkaJsonSerializer;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -17,9 +18,11 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
@@ -30,6 +33,7 @@ import java.util.Properties;
 
 @SpringBootApplication
 @EnableScheduling
+@Slf4j
 public class KafkaProducerApplication implements CommandLineRunner {
 
 	@Autowired
@@ -41,6 +45,19 @@ public class KafkaProducerApplication implements CommandLineRunner {
 		SpringApplication.run(KafkaProducerApplication.class, args);
 	}
 
+	@Value("${spring.kafka.producer.bootstrap-servers}")
+	private String bootstrapServers ;
+
+
+	@KafkaListener(topics = "first-topic",containerFactory = "createListenerContainerFactory")
+	public void consumeSells(String message){
+		log.info("message {}",message);
+	}
+
+	@KafkaListener(topics = "model-topic",containerFactory ="createListenerContainerFactoryModel")
+	public void consumeJson(SModel model){
+		log.info("message {}",model.getName());
+	}
 
 	@Override
 	public void run(String... args) throws Exception {
@@ -52,29 +69,24 @@ public class KafkaProducerApplication implements CommandLineRunner {
 		String groupId = "my-fourth-application";
 
 		// Create consumer config
-		Properties properties = new Properties();
-		properties.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-		properties.setProperty(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-		properties.setProperty(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-		properties.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");//earliest/latest/none
-		properties.setProperty(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+
 
 		//create consumer
-		KafkaConsumer<String, String> consumer = new KafkaConsumer<>(properties);
+	//	KafkaConsumer<String, String> consumer = new KafkaConsumer<>(properties);
 
 		//subscribe consumer to our topic(s)
-		consumer.subscribe(Arrays.asList(topic));
+	//	consumer.subscribe(Arrays.asList(topic));
 
 		//poll for new data
 		//for demo purpose using true
-		while(true) {
+	/*	while(true) {
 			ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(100));
 			records.forEach(record->{
 				logger.info("key: "+ record.key()+", value: "+ record.value());
 				logger.info("partition: "+record.partition()+", offset: "+record.offset());
 			});
 		}
-
+*/
 
 	}
 }
